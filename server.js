@@ -1,29 +1,35 @@
-const express = require("express");
-const cors = require("cors");
+import express from "express";
+import { PrismaClient } from "@prisma/client";
+import dotenv from "dotenv";
 
-const app = express();
-const PORT = process.env.PORT || 3000;
+dotenv.config();
 
-app.use(cors());
-app.use(express.json());
-
-// Import des routes
-const authRoutes = require("./routes/auth");
-const projectRoutes = require("./routes/projects");
-const workspaceRoutes = require("./routes/workspace");
-const moduleRoutes = require("./routes/modules");
-
-// Utilisation des routes
-app.use("/auth", authRoutes);
-app.use("/projects", projectRoutes);
-app.use("/workspace", workspaceRoutes);
-app.use("/modules", moduleRoutes);
-
-// Route test
-app.get("/health", (req, res) => {
-  res.json({ status: "ok", service: "meta-backend" });
+// Prisma 7 : OBLIGATOIRE → passer datasourceUrl ici
+const prisma = new PrismaClient({
+  datasourceUrl: process.env.DATABASE_URL,
 });
 
+const app = express();
+app.use(express.json());
+
+// Exemple de route test
+app.get("/", (req, res) => {
+  res.send("API OK");
+});
+
+// Exemple : récupérer tous les users
+app.get("/users", async (req, res) => {
+  try {
+    const users = await prisma.user.findMany();
+    res.json(users);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Erreur serveur" });
+  }
+});
+
+// Lancer le serveur
+const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
-  console.log(`Server running on port ${PORT}`);
+  console.log(`Serveur lancé sur le port ${PORT}`);
 });
